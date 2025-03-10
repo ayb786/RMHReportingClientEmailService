@@ -357,7 +357,7 @@ namespace RMHReportingClientEmailService
             catch (Exception ex)
             {
                 var err = ex.Message;
-                repo.InsertServiceLog("Error", "RMH reporting notification email error ~ " + ex.Message, "2");
+                repo.InsertServiceLog("Error", "RMH reporting client notification email error ~ " + ex.Message, "2");
                 //return false;
                 throw ex;
             }
@@ -426,7 +426,7 @@ namespace RMHReportingClientEmailService
                 var date = startDate.ToString("MM-dd-yyyy");
 
                 //string path = Directory.GetCurrentDirectory().ToString() + @"\Log\ServiceLog.txt";
-                string path = log_path + @"\RMHReportingEmailService_" + date + ".txt";
+                string path = log_path + @"\RMHReportingClientEmailService_" + date + ".txt";
                 using (StreamWriter sr = new StreamWriter(path, true))
                 {
                     sr.WriteLine(service + " : " + msg + " : " + DateTime.Now.ToString("MM/dd/yyyy HH:mm tt"));
