@@ -175,61 +175,7 @@ namespace RMHReportingClientEmailService
                     List<string> services = new List<string>();
                     foreach (var svc in lstServices)
                     {
-                        //var sync = repo.GetNextSyncStatus(svc.Key);
 
-                        //string lastRun = null;
-                        //string nextRun = null;
-                        //string curTime = null;
-
-                        //var isEmailRequired = false;
-                        //foreach (var item in sync) //list may contains multiple hour values.
-                        //{
-                        //    int hr24 = DateTime.Now.Hour == 0 ? 24 : DateTime.Now.Hour;
-                        //    if (item.IntervalType == "HOURS")
-                        //    {
-                        //        lastRun = Convert.ToDateTime(item.LastSyncTime).ToString("yyyy-MM-dd HH:mm");
-                        //        nextRun = Convert.ToDateTime(item.NextSyncTime).ToString("yyyy-MM-dd HH:mm");
-                        //        curTime = (hr24 == 24) ? "24:" + DateTime.Now.Minute.ToString().PadLeft(2, '0') : DateTime.Now.ToString("HH:mm");
-                        //        isEmailRequired = (item.IntervalTime.ToString().PadLeft(2, '0') + ":00" == curTime && item.SyncStatus == 1) ? true : false;
-
-                        //        DateTime dt1 = DateTime.Parse(lastRun);
-                        //        DateTime dt2 = DateTime.Now;
-
-                        //        var result = DateTime.Compare(dt1, dt2);
-                        //        //Less than zero dt1 is earlier than dt2.
-                        //        //Zero dt1 is the same as dt2.
-                        //        //Greater than zero dt1 is later than dt2.
-
-                        //        var hours = (dt2 - dt1).TotalHours;
-
-                        //        isEmailRequired = (svc.Key == 1 && hours >= 485) ? true : (svc.Key == 2 && hours >= 125) ? true : (svc.Key == 3 && hours >= 1445) ? true : false;
-
-
-
-                        //    }
-                        //    else if (item.IntervalType == "MINS")
-                        //    {
-                        //        lastRun = Convert.ToDateTime(item.LastSyncTime).ToString("yyyy-MM-dd HH:mm");
-                        //        nextRun = Convert.ToDateTime(item.NextSyncTime).ToString("yyyy-MM-dd HH:mm");
-                        //        curTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
-                        //        isEmailRequired = (DateTime.Parse(nextRun, CultureInfo.InvariantCulture) <= DateTime.Parse(curTime, CultureInfo.InvariantCulture) && item.SyncStatus == 1) ? true : false;
-
-                        //        DateTime dt1 = DateTime.Parse(lastRun);
-                        //        DateTime dt2 = DateTime.Now;
-
-                        //        var result = DateTime.Compare(dt1, dt2);
-                        //        //Less than zero dt1 is earlier than dt2.
-                        //        //Zero dt1 is the same as dt2.
-                        //        //Greater than zero dt1 is later than dt2.
-
-
-                        //        var hours = (dt1 - dt2).TotalHours;
-
-                        //        isEmailRequired = (svc.Key == 1 && hours >= 485) ? true : (svc.Key == 2 && hours >= 125) ? true : (svc.Key == 3 && hours >= 1445) ? true : false;
-
-                        //    }
-
-                        //}
 
                         var isEmailRequired = false;
                         var reslt = repo.GetLastSuccessServiceRun(svc.Key);
