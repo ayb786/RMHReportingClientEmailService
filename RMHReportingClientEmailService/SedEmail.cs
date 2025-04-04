@@ -16,9 +16,7 @@ namespace RMHReportingClientEmailService
     public class SendEmail
     {
         EmailRepository repo = null;
-        //List<SyncStatusModel> sync = new List<SyncStatusModel>();
         SftpModel sftp = new SftpModel();
-        ClientTypeModel clientType = new ClientTypeModel();
         int sftpErrorCount = 0;
         IDictionary<int, string> lstServices = null;
         string log_path = @"C:\ProgramData\RMH_API_Client_Logs\RMHReportingClientEmailService\";
@@ -65,7 +63,7 @@ namespace RMHReportingClientEmailService
                 if (!string.IsNullOrEmpty(DatabaseSettings.Database))
                 {
                     repo = new EmailRepository();
-                    sftp = repo.GetSftpCredentials();
+                    //sftp = repo.GetSftpCredentials();
 
                     //var localDirectory = Directory.GetCurrentDirectory().ToString() + @"\Log";
                     var localDirectory = log_path;
@@ -75,7 +73,8 @@ namespace RMHReportingClientEmailService
                     }
 
                     lstServices = new Dictionary<int, string>();
-                    lstServices.Add(1, "ReportingClientEmailService");
+                    lstServices.Add(1, "ReportingClientService");
+
                 }
             }
             catch (Exception ex)
@@ -127,8 +126,8 @@ namespace RMHReportingClientEmailService
 
                 if (!string.IsNullOrEmpty(DatabaseSettings.Database))
                 {
-                    clientType = repo.GetClientType();
-                    sftp = repo.GetSftpCredentials();
+                    //clientType = repo.GetClientType();
+                    //sftp = repo.GetSftpCredentials();
                 }
             }
             catch (Exception ex)
@@ -162,7 +161,7 @@ namespace RMHReportingClientEmailService
                     ReloadGlobalSettings();
 
                     //get smtp details
-                    var email = repo.GetNotificationEmail();
+                    var email = repo.GetEmailConfigurations();
 
                     if (email == null || string.IsNullOrEmpty(email.SmtpGateway) || string.IsNullOrEmpty(email.Port) || string.IsNullOrEmpty(email.SourceEmail) || string.IsNullOrEmpty(email.SourcePassword) || string.IsNullOrEmpty(email.TargetEmail1))
                     {
@@ -176,7 +175,6 @@ namespace RMHReportingClientEmailService
                     foreach (var svc in lstServices)
                     {
 
-
                         var isEmailRequired = false;
                         var reslt = repo.GetLastSuccessServiceRun(svc.Key);
 
@@ -187,7 +185,7 @@ namespace RMHReportingClientEmailService
                             //var minutes = (dt2 - dt1).Minutes;
                             var minutes = (int)dt2.Subtract(dt1).TotalMinutes;
 
-                            isEmailRequired = (svc.Key == 1 && minutes >= 485) ? true : (svc.Key == 2 && minutes >= 125) ? true : (svc.Key == 3 && minutes >= 1445) ? true : false;
+                            isEmailRequired = (svc.Key == 1 && minutes >= 15) ? true : false;
                         }
 
 
@@ -196,33 +194,16 @@ namespace RMHReportingClientEmailService
                         if (!string.IsNullOrEmpty(svcStatus) && svcStatus == "stopped" && isEmailRequired == true)
                         {
                             //services.Add(svc);
-                            repo.InsertServiceLog("Error", "" + svc.Value + " is stopped and not processing any tasks assigned", "0");
+                            repo.InsertServiceLog("Error", "" + svc.Value + " is stopped and not processing any tasks assigned", 0);
                         }
                     }
 
-                    /*** Disabled This on 24-09-2024  ***/
-                    ////get pending error logs for email
-                    //var erroLogs = repo.GetPendingErrorLog();
-                    //if (erroLogs != null && erroLogs.Count() > 0)
-                    //{
 
-                    //    var filteredLogList = repo.SkipDuplicateErrorLog(erroLogs, email.IgnoreNextErrorFor);
-
-                    //    if (filteredLogList != null && filteredLogList.Count() > 0)
-                    //    {
-                    //        SendMail(filteredLogList, services, email);
-                    //    }
-                    //}
-
-
-
-
-                    //T119: New PO email notifcation
-                    //Get New PO Email Log
                     var lst = repo.GetEmailLog();
                     if (lst != null && lst.Count() > 0)
                     {
-                        SendPOMail(lst, email);
+                        var DistinctErrorList = lst.GroupBy(x => x.Event).Select(y => y.First()).ToList();
+                        SendMail(DistinctErrorList, email);
                     }
 
 
@@ -238,14 +219,13 @@ namespace RMHReportingClientEmailService
             }
         }
 
-
-
-        public bool SendPOMail(List<EmailLogModel> logList, EmailModel email)
+        public bool SendMail(List<LogModel> logList, EmailModel email)
         {
             try
             {
+                var store = repo.GetStoreDetail();
 
-                foreach (EmailLogModel item in logList)
+                foreach (LogModel log in logList)
                 {
                     MailMessage mail = new MailMessage();
 
@@ -269,13 +249,22 @@ namespace RMHReportingClientEmailService
                     mail.From = new MailAddress(email.SourceEmail);
 
 
-                    mail.Subject = item.EmailSubj;
+                    //mail.Subject = item.EmailSubj;
+                    mail.Subject = "Notification from RMH Reporting Client";
 
-                    //var client = repo.GetClientType();
+                    ////var client = repo.GetClientType();
 
 
                     mail.IsBodyHtml = true;
-                    mail.Body = item.EmailBody + "<br />Time of submission: " + item.DateCreated;
+
+                    string mMsg = "";
+                    mMsg = mMsg + "Log Description: " + log.Event + " at " + log.DateCreated + " from store number " + store.StoreId;
+                    mMsg = mMsg + " <br />";
+                    mMsg = mMsg + "Client/service type: RMH Reporting Client";
+                    mMsg = mMsg + " <br /><br />";
+                    mMsg = mMsg + " </span>";
+
+                    mail.Body = mMsg;
 
 
                     SmtpClient mySmtpClient = new SmtpClient
@@ -291,10 +280,8 @@ namespace RMHReportingClientEmailService
                     mySmtpClient.Send(mail);
                     mail.Dispose();
 
-                    //repo.InsertServiceLog("Success", "New PO # "++" notification email sent.", "1");
-
-                    //Update PO email log flag
-                    repo.UpdateEmailLog(item);
+                    //Update email notification log flag
+                    repo.UpdateErrorEmailLog(log);
                 }
 
                 return true;
@@ -303,7 +290,7 @@ namespace RMHReportingClientEmailService
             catch (Exception ex)
             {
                 var err = ex.Message;
-                repo.InsertServiceLog("Error", "RMH reporting client notification email error ~ " + ex.Message, "2");
+                repo.InsertServiceLog("Error", "Notification email service error ~ " + ex.Message, 2);
                 //return false;
                 throw ex;
             }
